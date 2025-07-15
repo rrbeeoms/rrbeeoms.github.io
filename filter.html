@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>小朋友鼓勵本照片篩選</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; background: #f4f4f4; }
+    h1 { color: #333; }
+    .filter-form { margin: 20px; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .filter-form select, .filter-form button { padding: 10px; margin: 5px; border-radius: 5px; border: 1px solid #ccc; font-size: 16px; }
+    .filter-form button { background: #007bff; color: white; border: none; cursor: pointer; }
+    .filter-form button:hover { background: #0056b3; }
+    .photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; padding: 20px; }
+    .photo { background: #fff; padding: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .photo img { width: 150px; height: 150px; object-fit: cover; border-radius: 10px; cursor: pointer; }
+    .photo p { margin: 5px 0; font-size: 14px; color: #333; }
+    .slideshow-btn { padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; margin: 20px; }
+    .slideshow-btn:hover { background: #218838; }
+    .slideshow-container { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; }
+    .slideshow-container img { max-width: 80%; max-height: 80%; border-radius: 10px; }
+    .slideshow-controls { position: absolute; bottom: 20px; }
+    .slideshow-controls button { padding: 10px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .slideshow-controls button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <h1>小朋友鼓勵本照片篩選</h1>
+  <div class="filter-form">
+    <select id="nameFilter">
+      <option value="">選擇小朋友</option>
+      <option value="心恩_游">心恩游</option>
+      <option value="沛馨_謝">沛馨謝</option>
+      <option value="芊妤_林">芊妤林</option>
+      <option value="坤穎_楊">坤穎楊</option>
+      <option value="坤翰_楊">坤翰楊</option>
+      <option value="牧謙_陳">牧謙陳</option>
+      <option value="知愛_李">知愛李</option>
+      <option value="筠縢_陳">筠縢陳</option>
+      <option value="鉉忠_林">鉉忠林</option>
+      <option value="培恩_洪">培恩洪</option>
+      <option value="嘉晨_洪">嘉晨洪</option>
+      <option value="允恩_唐">允恩唐</option>
+      <option value="允薆_唐">允薆唐</option>
+    </select>
+    <select id="dateFilter">
+      <option value="">選擇日期</option>
+      <!-- 動態生成日期選項 -->
+    </select>
+    <select id="themeFilter">
+      <option value="">選擇主題</option>
+      <option value="靜">靜態</option>
+      <option value="純">純粹</option>
+    </select>
+    <button onclick="filterPhotos()">篩選</button>
+  </div>
+  <div class="photos" id="photos"></div>
+  <button class="slideshow-btn" onclick="startSlideshow()">幻燈片播放</button>
+  <div class="slideshow-container" id="slideshow">
+    <img id="slideshowImage" src="" alt="幻燈片">
+    <div class="slideshow-controls">
+      <button onclick="toggleSlideshow()">暫停</button>
+      <button onclick="closeSlideshow()">關閉</button>
+    </div>
+  </div>
+
+  <script>
+    // 模擬照片清單（需替換為實際 Google 雲端硬碟直鏈）
+    const photos = [
+      { url: "https://drive.google.com/thumbnail?id=照片ID1", name: "20250711_靜01_沛馨_謝.jpg" },
+      { url: "https://drive.google.com/thumbnail?id=照片ID2", name: "20250711_靜01_心恩_游.jpg" },
+      { url: "https://drive.google.com/thumbnail?id=照片ID3", name: "20250718_純04_芊妤_林.jpg" },
+      // 加入更多照片
+    ];
+
+    // 動態生成日期選項
+    const dateFilter = document.getElementById("dateFilter");
+    const dates = [...new Set(photos.map(p => p.name.slice(0, 8)))];
+    dates.forEach(date => {
+      const option = document.createElement("option");
+      option.value = date;
+      option.textContent = `${date.slice(0,4)}年${date.slice(4,6)}月${date.slice(6,8)}日`;
+      dateFilter.appendChild(option);
+    });
+
+    // 解析檔名
+    function parsePhotoName(fileName) {
+      const parts = fileName.split("_");
+      if (parts.length === 4) {
+        const date = parts[0];
+        const theme = parts[1];
+        const name = parts[2];
+        const surname = parts[3].split(".")[0];
+        const year = date.slice(0, 4);
+        const month = date.slice(4, 6);
+        const day = date.slice(6, 8);
+        const themeName = theme.slice(0, -2);
+        const themeNum = theme.slice(-2);
+        return `${name}${surname} - ${themeName}態主題第${themeNum}次 - ${year}年${month}月${day}日`;
+      }
+      return fileName;
+    }
+
+    // 篩選照片
+    function filterPhotos() {
+      const name = document.getElementById("nameFilter").value;
+      const date = document.getElementById("dateFilter").value;
+      const theme = document.getElementById("themeFilter").value;
+
+      if (!name && !date && !theme) {
+        alert("請至少選擇一個篩選條件！");
+        return;
+      }
+
+      const photosDiv = document.getElementById("photos");
+      photosDiv.innerHTML = "";
+      filteredPhotos = photos.filter(p => {
+        const parts = p.name.split("_");
+        const photoDate = parts[0];
+        const photoTheme = parts[1].slice(0, -2);
+        const photoName = parts[2] + "_" + parts[3].split(".")[0];
+        return (!name || photoName === name) &&
+               (!date || photoDate === date) &&
+               (!theme || photoTheme === theme);
+      });
+
+      filteredPhotos.forEach(photo => {
+        const div = document.createElement("div");
+        div.className = "photo";
+        div.innerHTML = `
+          <a href="${photo.url}" target="_blank">
+            <img src="${photo.url}" alt="${photo.name}">
+          </a>
+          <p>${parsePhotoName(photo.name)}</p>
+        `;
+        photosDiv.appendChild(div);
+      });
+    }
+
+    // 幻燈片功能
+    let filteredPhotos = [];
+    let currentIndex = 0;
+    let slideshowInterval = null;
+
+    function startSlideshow() {
+      if (filteredPhotos.length === 0) {
+        alert("請先篩選照片！");
+        return;
+      }
+      const slideshow = document.getElementById("slideshow");
+      slideshow.style.display = "flex";
+      currentIndex = 0;
+      updateSlideshow();
+      slideshowInterval = setInterval(nextSlide, 3000);
+    }
+
+    function updateSlideshow() {
+      const slideshowImage = document.getElementById("slideshowImage");
+      slideshowImage.src = filteredPhotos[currentIndex].url;
+      slideshowImage.alt = parsePhotoName(filteredPhotos[currentIndex].name);
+    }
+
+    function nextSlide() {
+      currentIndex = (currentIndex + 1) % filteredPhotos.length;
+      updateSlideshow();
+    }
+
+    function toggleSlideshow() {
+      if (slideshowInterval) {
+        clearInterval(slideshowInterval);
+        slideshowInterval = null;
+        document.querySelector(".slideshow-controls button").textContent = "播放";
+      } else {
+        slideshowInterval = setInterval(nextSlide, 3000);
+        document.querySelector(".slideshow-controls button").textContent = "暫停";
+      }
+    }
+
+    function closeSlideshow() {
+      const slideshow = document.getElementById("slideshow");
+      slideshow.style.display = "none";
+      clearInterval(slideshowInterval);
+      slideshowInterval = null;
+      document.querySelector(".slideshow-controls button").textContent = "暫停";
+    }
+  </script>
+</body>
+</html>
