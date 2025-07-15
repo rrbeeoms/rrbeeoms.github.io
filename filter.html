@@ -65,23 +65,35 @@
   </div>
 
   <script>
-    // 模擬照片清單（需替換為實際 Google 雲端硬碟直鏈）
-    const photos = [
-      { url: "https://drive.google.com/thumbnail?id=照片ID1", name: "20250711_靜01_沛馨_謝.jpg" },
-      { url: "https://drive.google.com/thumbnail?id=照片ID2", name: "20250711_靜01_心恩_游.jpg" },
-      { url: "https://drive.google.com/thumbnail?id=照片ID3", name: "20250718_純04_芊妤_林.jpg" },
-      // 加入更多照片
-    ];
+    let photos = [];
+    let filteredPhotos = [];
+    let currentIndex = 0;
+    let slideshowInterval = null;
 
-    // 動態生成日期選項
-    const dateFilter = document.getElementById("dateFilter");
-    const dates = [...new Set(photos.map(p => p.name.slice(0, 8)))];
-    dates.forEach(date => {
-      const option = document.createElement("option");
-      option.value = date;
-      option.textContent = `${date.slice(0,4)}年${date.slice(4,6)}月${date.slice(6,8)}日`;
-      dateFilter.appendChild(option);
-    });
+    // 載入 photos.json
+    fetch('photos.json')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('無法載入 photos.json');
+        }
+        return response.json();
+      })
+      .then(data => {
+        photos = data;
+        // 動態生成日期選項
+        const dateFilter = document.getElementById("dateFilter");
+        const dates = [...new Set(photos.map(p => p.name.slice(0, 8)))];
+        dates.forEach(date => {
+          const option = document.createElement("option");
+          option.value = date;
+          option.textContent = `${date.slice(0,4)}年${date.slice(4,6)}月${date.slice(6,8)}日`;
+          dateFilter.appendChild(option);
+        });
+      })
+      .catch(error => {
+        console.error('載入照片清單失敗:', error);
+        alert('無法載入照片清單，請確認 photos.json 是否存在且格式正確');
+      });
 
     // 解析檔名
     function parsePhotoName(fileName) {
@@ -138,10 +150,6 @@
     }
 
     // 幻燈片功能
-    let filteredPhotos = [];
-    let currentIndex = 0;
-    let slideshowInterval = null;
-
     function startSlideshow() {
       if (filteredPhotos.length === 0) {
         alert("請先篩選照片！");
