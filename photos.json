@@ -1,0 +1,17 @@
+// 替換 photos 定義
+fetch('photos.json')
+  .then(response => response.json())
+  .then(data => {
+    const photos = data;
+    // 動態生成日期選項
+    const dateFilter = document.getElementById("dateFilter");
+    const dates = [...new Set(photos.map(p => p.name.slice(0, 8)))];
+    dates.forEach(date => {
+      const option = document.createElement("option");
+      option.value = date;
+      option.textContent = `${date.slice(0,4)}年${date.slice(4,6)}月${date.slice(6,8)}日`;
+      dateFilter.appendChild(option);
+    });
+    // 繼續其他邏輯（filterPhotos, startSlideshow 等）
+  })
+  .catch(error => console.error('載入照片清單失敗:', error));
